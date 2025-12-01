@@ -30,12 +30,14 @@ func RegisterRoutes(router *gin.Engine, c *Controller) {
 func (c *Controller) Login(ctx *gin.Context) {
 	var req LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	response, err := c.service.Login(ctx.Request.Context(), &req)
 	if err != nil {
+		ctx.Error(err)
 		switch err {
 		case ErrInvalidCredentials:
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
@@ -64,12 +66,14 @@ func (c *Controller) Login(ctx *gin.Context) {
 func (c *Controller) Register(ctx *gin.Context) {
 	var req RegisterRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	response, err := c.service.Register(ctx.Request.Context(), &req)
 	if err != nil {
+		ctx.Error(err)
 		switch err {
 		case ErrUserAlreadyExists:
 			ctx.JSON(http.StatusConflict, gin.H{"error": "User already exists"})

@@ -52,12 +52,14 @@ func (c *Controller) Create(ctx *gin.Context) {
 
 	var req CreateVocabRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	vocab, err := c.service.Create(ctx.Request.Context(), userID, &req)
 	if err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create vocabulary"})
 		return
 	}
@@ -78,6 +80,7 @@ func (c *Controller) GetAll(ctx *gin.Context) {
 
 	response, err := c.service.GetByUserID(ctx.Request.Context(), userID, page, pageSize)
 	if err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get vocabularies"})
 		return
 	}
@@ -95,12 +98,14 @@ func (c *Controller) GetByID(ctx *gin.Context) {
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
 	vocab, err := c.service.GetByID(ctx.Request.Context(), userID, id)
 	if err != nil {
+		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})
@@ -125,18 +130,21 @@ func (c *Controller) Update(ctx *gin.Context) {
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
 	var req UpdateVocabRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	vocab, err := c.service.Update(ctx.Request.Context(), userID, id, &req)
 	if err != nil {
+		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})
@@ -161,11 +169,13 @@ func (c *Controller) Delete(ctx *gin.Context) {
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
+		ctx.Error(err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
 	if err := c.service.Delete(ctx.Request.Context(), userID, id); err != nil {
+		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})

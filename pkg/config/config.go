@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 // Config holds the application configuration
@@ -14,6 +16,9 @@ type Config struct {
 
 // Load loads configuration from environment variables
 func Load() *Config {
+	// Load .env file (ignore error if file doesn't exist)
+	_ = godotenv.Load()
+
 	return &Config{
 		Port:        getEnv("PORT", "8080"),
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://localhost:5432/vocabulary_db?sslmode=disable"),
