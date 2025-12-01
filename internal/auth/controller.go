@@ -22,6 +22,7 @@ func RegisterRoutes(router *gin.Engine, c *Controller) {
 	{
 		auth.POST("/login", c.Login)
 		auth.POST("/register", c.Register)
+		auth.POST("/logout", c.Logout)
 	}
 }
 
@@ -44,6 +45,18 @@ func (c *Controller) Login(ctx *gin.Context) {
 		return
 	}
 
+	// Set HTTP-only cookie with token
+	ctx.SetCookie(
+		"auth_token",
+		response.Token,
+		86400,
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	response.Message = "Login successful"
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -66,5 +79,33 @@ func (c *Controller) Register(ctx *gin.Context) {
 		return
 	}
 
+	// Set HTTP-only cookie with token
+	ctx.SetCookie(
+		"auth_token",
+		response.Token,
+		86400,
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	response.Message = "Registration successful"
 	ctx.JSON(http.StatusCreated, response)
+}
+
+// Logout handles user logout
+func (c *Controller) Logout(ctx *gin.Context) {
+	// Clear the auth cookie
+	ctx.SetCookie(
+		"auth_token",
+		"",
+		-1,
+		"/",
+		"",
+		true,
+		true,
+	)
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
 }

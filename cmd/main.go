@@ -7,6 +7,7 @@ import (
 	"vocabulary-app-be/internal/vocab"
 	"vocabulary-app-be/pkg/config"
 	"vocabulary-app-be/pkg/database"
+	"vocabulary-app-be/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,7 +24,11 @@ func main() {
 	defer db.Close()
 
 	// Initialize Gin router
-	router := gin.Default()
+	router := gin.New()
+
+	// Add middleware
+	router.Use(gin.Recovery())      // Recover from panics
+	router.Use(middleware.Logger()) // Custom logger for API tracing
 
 	// Initialize auth module
 	authRepo := auth.NewRepository(db)
@@ -35,7 +40,7 @@ func main() {
 	vocabRepo := vocab.NewRepository(db)
 	vocabService := vocab.NewService(vocabRepo)
 	vocabController := vocab.NewController(vocabService)
-	vocab.RegisterRoutes(router, vocabController)
+	vocab.RegisterRoutes(router, vocabController, cfg.JWTSecret)
 
 	// Start server
 	log.Printf("Server starting on port %s", cfg.Port)

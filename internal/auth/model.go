@@ -27,6 +27,7 @@ type RegisterRequest struct {
 
 // AuthResponse represents the authentication response
 type AuthResponse struct {
-	Token string `json:"token"`
-	User  User   `json:"user"`
+	Token   string `json:"token,omitempty"`
+	User    User   `json:"user"`
+	Message string `json:"message,omitempty"`
 }

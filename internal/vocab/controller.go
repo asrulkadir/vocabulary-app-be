@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"vocabulary-app-be/pkg/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,9 +20,10 @@ func NewController(service Service) *Controller {
 }
 
 // RegisterRoutes registers vocabulary routes
-func RegisterRoutes(router *gin.Engine, c *Controller) {
+func RegisterRoutes(router *gin.Engine, c *Controller, jwtSecret string) {
 	vocab := router.Group("/api/vocabularies")
-	// TODO: Add auth middleware
+	// Add auth middleware
+	vocab.Use(middleware.AuthMiddleware(jwtSecret))
 	{
 		vocab.POST("", c.Create)
 		vocab.GET("", c.GetAll)

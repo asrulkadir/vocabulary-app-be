@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"vocabulary-app-be/pkg/config"
+	"vocabulary-app-be/pkg/middleware"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -45,7 +48,7 @@ func (s *service) Login(ctx context.Context, req *LoginRequest) (*AuthResponse, 
 	}
 
 	// Generate JWT token
-	token, err := generateToken(user.ID)
+	token, err := generateToken(user.ID, user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +88,7 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 	}
 
 	// Generate JWT token
-	token, err := generateToken(user.ID)
+	token, err := generateToken(user.ID, user.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +112,8 @@ func (s *service) GetUserByID(ctx context.Context, id int64) (*User, error) {
 }
 
 // generateToken generates a JWT token for the user
-func generateToken(userID int64) (string, error) {
-	// TODO: Implement JWT token generation
-	// You can use github.com/golang-jwt/jwt/v5
-	return "token", nil
+func generateToken(userID int64, email string) (string, error) {
+	cfg := config.Load()
+	token, err := middleware.GenerateToken(userID, email, cfg.JWTSecret, 24)
+	return token, err
 }
