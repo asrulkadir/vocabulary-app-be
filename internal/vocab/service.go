@@ -113,7 +113,8 @@ func (s *service) Update(ctx context.Context, userID, id int64, req *UpdateVocab
 	if req.Definition != "" {
 		vocab.Definition = req.Definition
 	}
-	if req.Example != "" {
+	exampleValue, err := req.Example.Value()
+	if err == nil && exampleValue != "" {
 		vocab.Example = req.Example
 	}
 	if req.Translation != "" {
