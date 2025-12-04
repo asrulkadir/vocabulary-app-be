@@ -24,6 +24,24 @@ func (e Examples) Value() (driver.Value, error) {
 	return json.Marshal(e)
 }
 
+// Status represents the vocabulary learning status
+type Status string
+
+const (
+	StatusLearning   Status = "learning"
+	StatusMemorized  Status = "memorized"
+)
+
+// IsValid checks if the status is valid
+func (s Status) IsValid() bool {
+	return s == StatusLearning || s == StatusMemorized
+}
+
+// String returns the string representation of status
+func (s Status) String() string {
+	return string(s)
+}
+
 // Vocabulary represents the vocabulary domain model
 type Vocabulary struct {
 	ID          int64     `json:"id"`
@@ -32,7 +50,8 @@ type Vocabulary struct {
 	Definition  string    `json:"definition"`
 	Example     Examples  `json:"example,omitempty"`
 	Translation string    `json:"translation,omitempty"`
-	Status      string    `json:"status"`
+	Status      Status    `json:"status"`
+	TestCount   int64     `json:"test_count"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -40,7 +59,7 @@ type Vocabulary struct {
 // CreateVocabRequest represents the create vocabulary request payload
 type CreateVocabRequest struct {
 	Word        string   `json:"word" binding:"required"`
-	Definition  string   `json:"definition" binding:"required"`
+	Definition  string   `json:"definition"`
 	Example     Examples `json:"example"`
 	Translation string   `json:"translation"`
 }
@@ -51,7 +70,7 @@ type UpdateVocabRequest struct {
 	Definition  string   `json:"definition"`
 	Example     Examples `json:"example"`
 	Translation string   `json:"translation"`
-	Status      string   `json:"status"`
+	Status      Status   `json:"status" binding:"required,oneof=learning memorized"`
 }
 
 // VocabListResponse represents the vocabulary list response

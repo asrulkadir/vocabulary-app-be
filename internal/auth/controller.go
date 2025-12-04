@@ -3,6 +3,8 @@ package auth
 import (
 	"net/http"
 
+	"vocabulary-app-be/pkg/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +33,7 @@ func (c *Controller) Login(ctx *gin.Context) {
 	var req LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -40,9 +42,9 @@ func (c *Controller) Login(ctx *gin.Context) {
 		ctx.Error(err)
 		switch err {
 		case ErrInvalidCredentials:
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+			utils.ErrorResponse(ctx, http.StatusUnauthorized, "Invalid email or password")
 		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Internal server error")
 		}
 		return
 	}
@@ -58,8 +60,7 @@ func (c *Controller) Login(ctx *gin.Context) {
 		true,
 	)
 
-	response.Message = "Login successful"
-	ctx.JSON(http.StatusOK, response)
+	utils.SuccessResponse(ctx, http.StatusOK, "Login successful", response)
 }
 
 // Register handles user registration
@@ -67,7 +68,7 @@ func (c *Controller) Register(ctx *gin.Context) {
 	var req RegisterRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -76,9 +77,9 @@ func (c *Controller) Register(ctx *gin.Context) {
 		ctx.Error(err)
 		switch err {
 		case ErrUserAlreadyExists:
-			ctx.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+			utils.ErrorResponse(ctx, http.StatusConflict, "User already exists")
 		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Internal server error")
 		}
 		return
 	}
@@ -94,8 +95,7 @@ func (c *Controller) Register(ctx *gin.Context) {
 		true,
 	)
 
-	response.Message = "Registration successful"
-	ctx.JSON(http.StatusCreated, response)
+	utils.SuccessResponse(ctx, http.StatusCreated, "Registration successful", response)
 }
 
 // Logout handles user logout
@@ -111,5 +111,5 @@ func (c *Controller) Logout(ctx *gin.Context) {
 		true,
 	)
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Logout successful"})
+	utils.SuccessResponse(ctx, http.StatusOK, "Logout successful", nil)
 }

@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"vocabulary-app-be/pkg/middleware"
+	"vocabulary-app-be/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,32 +47,32 @@ func getUserID(ctx *gin.Context) int64 {
 func (c *Controller) Create(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	var req CreateVocabRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	vocab, err := c.service.Create(ctx.Request.Context(), userID, &req)
 	if err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create vocabulary"})
+		utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to create vocabulary")
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, vocab)
+	utils.SuccessResponse(ctx, http.StatusCreated, "Vocabulary created successfully", vocab)
 }
 
 // GetAll handles getting all vocabularies for a user
 func (c *Controller) GetAll(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
@@ -81,25 +82,25 @@ func (c *Controller) GetAll(ctx *gin.Context) {
 	response, err := c.service.GetByUserID(ctx.Request.Context(), userID, page, pageSize)
 	if err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get vocabularies"})
+		utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to get vocabularies")
 		return
 	}
 
-	ctx.JSON(http.StatusOK, response)
+	utils.SuccessResponse(ctx, http.StatusOK, "Vocabularies retrieved successfully", response)
 }
 
 // GetByID handles getting a vocabulary by ID
 func (c *Controller) GetByID(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
@@ -108,37 +109,37 @@ func (c *Controller) GetByID(ctx *gin.Context) {
 		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})
+			utils.ErrorResponse(ctx, http.StatusNotFound, "Vocabulary not found")
 		case ErrUnauthorized:
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			utils.ErrorResponse(ctx, http.StatusForbidden, "Access denied")
 		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get vocabulary"})
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to get vocabulary")
 		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, vocab)
+	utils.SuccessResponse(ctx, http.StatusOK, "Vocabulary retrieved successfully", vocab)
 }
 
 // Update handles vocabulary update
 func (c *Controller) Update(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
 	var req UpdateVocabRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -147,30 +148,30 @@ func (c *Controller) Update(ctx *gin.Context) {
 		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})
+			utils.ErrorResponse(ctx, http.StatusNotFound, "Vocabulary not found")
 		case ErrUnauthorized:
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			utils.ErrorResponse(ctx, http.StatusForbidden, "Access denied")
 		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update vocabulary"})
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to update vocabulary")
 		}
 		return
 	}
 
-	ctx.JSON(http.StatusOK, vocab)
+	utils.SuccessResponse(ctx, http.StatusOK, "Vocabulary updated successfully", vocab)
 }
 
 // Delete handles vocabulary deletion
 func (c *Controller) Delete(ctx *gin.Context) {
 	userID := getUserID(ctx)
 	if userID == 0 {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
 	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		ctx.Error(err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
 
@@ -178,14 +179,14 @@ func (c *Controller) Delete(ctx *gin.Context) {
 		ctx.Error(err)
 		switch err {
 		case ErrVocabNotFound:
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "Vocabulary not found"})
+			utils.ErrorResponse(ctx, http.StatusNotFound, "Vocabulary not found")
 		case ErrUnauthorized:
-			ctx.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			utils.ErrorResponse(ctx, http.StatusForbidden, "Access denied")
 		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete vocabulary"})
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to delete vocabulary")
 		}
 		return
 	}
 
-	ctx.JSON(http.StatusNoContent, nil)
+	utils.SuccessResponse(ctx, http.StatusNoContent, "Vocabulary deleted successfully", nil)
 }

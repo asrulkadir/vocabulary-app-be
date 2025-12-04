@@ -8,12 +8,12 @@ import (
 type Response struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Data    any         `json:"data,omitempty"`
 	Error   string      `json:"error,omitempty"`
 }
 
 // SuccessResponse sends a success response
-func SuccessResponse(ctx *gin.Context, statusCode int, message string, data interface{}) {
+func SuccessResponse(ctx *gin.Context, statusCode int, message string, data any) {
 	ctx.JSON(statusCode, Response{
 		Success: true,
 		Message: message,
