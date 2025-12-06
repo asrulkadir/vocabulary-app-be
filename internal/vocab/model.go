@@ -44,16 +44,18 @@ func (s Status) String() string {
 
 // Vocabulary represents the vocabulary domain model
 type Vocabulary struct {
-	ID          int64     `json:"id"`
-	UserID      int64     `json:"user_id"`
-	Word        string    `json:"word"`
-	Definition  string    `json:"definition"`
-	Example     Examples  `json:"example,omitempty"`
-	Translation string    `json:"translation,omitempty"`
-	Status      Status    `json:"status"`
-	TestCount   int64     `json:"test_count"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID                int64     `json:"id"`
+	UserID            int64     `json:"user_id"`
+	Word              string    `json:"word"`
+	Definition        string    `json:"definition"`
+	Example           Examples  `json:"example,omitempty"`
+	Translation       string    `json:"translation,omitempty"`
+	Status            Status    `json:"status"`
+	TestCount         int64     `json:"test_count"`
+	PassedTestCount   int64     `json:"passed_test_count"`
+	FailedTestCount   int64     `json:"failed_test_count"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 // CreateVocabRequest represents the create vocabulary request payload
