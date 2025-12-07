@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -86,7 +87,7 @@ func GenerateToken(userID int64, email string, secret string, expirationHours in
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// You would set this to a real expiration time in production
-			// ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(expirationHours))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(expirationHours))),
 		},
 	}
 

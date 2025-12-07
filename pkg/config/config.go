@@ -12,6 +12,7 @@ type Config struct {
 	DatabaseURL string
 	JWTSecret   string
 	Environment string
+	CORSOrigin  string
 }
 
 // Load loads configuration from environment variables
@@ -24,6 +25,7 @@ func Load() *Config {
 		DatabaseURL: getEnv("DATABASE_URL", "postgres://localhost:5432/vocabulary_db?sslmode=disable"),
 		JWTSecret:   getEnv("JWT_SECRET", "your-secret-key"),
 		Environment: getEnv("ENVIRONMENT", "development"),
+		CORSOrigin:  getEnv("CORS_ORIGIN", "http://localhost:3000"),
 	}
 }
 

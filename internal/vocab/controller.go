@@ -31,6 +31,7 @@ func RegisterRoutes(router *gin.Engine, c *Controller, jwtSecret string) {
 		vocab.GET("/:id", c.GetByID)
 		vocab.PUT("/:id", c.Update)
 		vocab.DELETE("/:id", c.Delete)
+		vocab.POST("/:id/test-result", c.UpdateTestResult)
 	}
 }
 
@@ -189,4 +190,43 @@ func (c *Controller) Delete(ctx *gin.Context) {
 	}
 
 	utils.SuccessResponse(ctx, http.StatusNoContent, "Vocabulary deleted successfully", nil)
+}
+
+// UpdateTestResult handles updating test result for a vocabulary
+func (c *Controller) UpdateTestResult(ctx *gin.Context) {
+	userID := getUserID(ctx)
+	if userID == 0 {
+		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.Error(err)
+		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
+		return
+	}
+
+	var req TestResultRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.Error(err)
+		utils.ErrorResponse(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	vocab, err := c.service.UpdateTestResult(ctx.Request.Context(), userID, id, req.Passed)
+	if err != nil {
+		ctx.Error(err)
+		switch err {
+		case ErrVocabNotFound:
+			utils.ErrorResponse(ctx, http.StatusNotFound, "Vocabulary not found")
+		case ErrUnauthorized:
+			utils.ErrorResponse(ctx, http.StatusForbidden, "Access denied")
+		default:
+			utils.ErrorResponse(ctx, http.StatusInternalServerError, "Failed to update test result")
+		}
+		return
+	}
+
+	utils.SuccessResponse(ctx, http.StatusOK, "Test result updated successfully", vocab)
 }

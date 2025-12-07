@@ -27,8 +27,9 @@ func main() {
 	router := gin.New()
 
 	// Add middleware
-	router.Use(gin.Recovery())      // Recover from panics
-	router.Use(middleware.Logger()) // Custom logger for API tracing
+	router.Use(middleware.CORS(cfg))        // Enable CORS with config
+	router.Use(gin.Recovery())              // Recover from panics
+	router.Use(middleware.Logger())         // Custom logger for API tracing
 
 	// Initialize auth module
 	authRepo := auth.NewRepository(db)

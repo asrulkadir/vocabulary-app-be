@@ -17,6 +17,7 @@ type Service interface {
 	GetByUserID(ctx context.Context, userID int64, page, pageSize int) (*VocabListResponse, error)
 	Update(ctx context.Context, userID, id int64, req *UpdateVocabRequest) (*Vocabulary, error)
 	Delete(ctx context.Context, userID, id int64) error
+	UpdateTestResult(ctx context.Context, userID, id int64, passed bool) (*Vocabulary, error)
 }
 
 type service struct {
@@ -36,6 +37,10 @@ func (s *service) Create(ctx context.Context, userID int64, req *CreateVocabRequ
 		Definition:  req.Definition,
 		Example:     req.Example,
 		Translation: req.Translation,
+		Status:      StatusLearning,
+		TestCount:   0,
+		PassedTestCount: 0,
+		FailedTestCount: 0,
 	}
 
 	if err := s.repo.Create(ctx, vocab); err != nil {
@@ -144,4 +149,39 @@ func (s *service) Delete(ctx context.Context, userID, id int64) error {
 	}
 
 	return s.repo.Delete(ctx, id)
+}
+
+// UpdateTestResult updates the test result for a vocabulary
+func (s *service) UpdateTestResult(ctx context.Context, userID, id int64, passed bool) (*Vocabulary, error) {
+	vocab, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if vocab == nil {
+		return nil, ErrVocabNotFound
+	}
+
+	// Check ownership
+	if vocab.UserID != userID {
+		return nil, ErrUnauthorized
+	}
+
+	// Update test counts
+	vocab.TestCount++
+	if passed {
+		vocab.PassedTestCount++
+	} else {
+		vocab.FailedTestCount++
+	}
+
+	// Auto-memorize if passed - failed >= 10
+	if vocab.PassedTestCount-vocab.FailedTestCount >= 10 && vocab.Status != StatusMemorized {
+		vocab.Status = StatusMemorized
+	}
+
+	if err := s.repo.Update(ctx, vocab); err != nil {
+		return nil, err
+	}
+
+	return vocab, nil
 }

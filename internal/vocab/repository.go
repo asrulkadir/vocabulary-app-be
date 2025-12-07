@@ -25,8 +25,8 @@ func NewRepository(db *sql.DB) Repository {
 
 // Create creates a new vocabulary entry
 func (r *repository) Create(ctx context.Context, vocab *Vocabulary) error {
-	query := `INSERT INTO vocabularies (user_id, word, definition, example, translation, created_at, updated_at) 
-			  VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id`
+	query := `INSERT INTO vocabularies (user_id, word, definition, example, translation, status, test_count, passed_test_count, failed_test_count, created_at, updated_at) 
+			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING id`
 
 	return r.db.QueryRowContext(ctx, query,
 		vocab.UserID,
@@ -34,12 +34,16 @@ func (r *repository) Create(ctx context.Context, vocab *Vocabulary) error {
 		vocab.Definition,
 		vocab.Example,
 		vocab.Translation,
+		vocab.Status,
+		vocab.TestCount,
+		vocab.PassedTestCount,
+		vocab.FailedTestCount,
 	).Scan(&vocab.ID)
 }
 
 // FindByID finds a vocabulary by ID
 func (r *repository) FindByID(ctx context.Context, id int64) (*Vocabulary, error) {
-	query := `SELECT id, user_id, word, definition, example, translation, created_at, updated_at 
+	query := `SELECT id, user_id, word, definition, example, translation, status, test_count, passed_test_count, failed_test_count, created_at, updated_at 
 			  FROM vocabularies WHERE id = $1`
 
 	var vocab Vocabulary
@@ -50,6 +54,10 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*Vocabulary, error
 		&vocab.Definition,
 		&vocab.Example,
 		&vocab.Translation,
+		&vocab.Status,
+		&vocab.TestCount,
+		&vocab.PassedTestCount,
+		&vocab.FailedTestCount,
 		&vocab.CreatedAt,
 		&vocab.UpdatedAt,
 	)
@@ -74,7 +82,7 @@ func (r *repository) FindByUserID(ctx context.Context, userID int64, page, pageS
 
 	// Get paginated results
 	offset := (page - 1) * pageSize
-	query := `SELECT id, user_id, word, definition, example, translation, created_at, updated_at 
+	query := `SELECT id, user_id, word, definition, example, translation, status, test_count, passed_test_count, failed_test_count, created_at, updated_at 
 			  FROM vocabularies WHERE user_id = $1 
 			  ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
@@ -94,6 +102,10 @@ func (r *repository) FindByUserID(ctx context.Context, userID int64, page, pageS
 			&vocab.Definition,
 			&vocab.Example,
 			&vocab.Translation,
+			&vocab.Status,
+			&vocab.TestCount,
+			&vocab.PassedTestCount,
+			&vocab.FailedTestCount,
 			&vocab.CreatedAt,
 			&vocab.UpdatedAt,
 		); err != nil {
@@ -108,14 +120,18 @@ func (r *repository) FindByUserID(ctx context.Context, userID int64, page, pageS
 // Update updates a vocabulary entry
 func (r *repository) Update(ctx context.Context, vocab *Vocabulary) error {
 	query := `UPDATE vocabularies 
-			  SET word = $1, definition = $2, example = $3, translation = $4, updated_at = NOW() 
-			  WHERE id = $5`
+			  SET word = $1, definition = $2, example = $3, translation = $4, status = $5, test_count = $6, passed_test_count = $7, failed_test_count = $8, updated_at = NOW() 
+			  WHERE id = $9`
 
 	_, err := r.db.ExecContext(ctx, query,
 		vocab.Word,
 		vocab.Definition,
 		vocab.Example,
 		vocab.Translation,
+		vocab.Status,
+		vocab.TestCount,
+		vocab.PassedTestCount,
+		vocab.FailedTestCount,
 		vocab.ID,
 	)
 	return err

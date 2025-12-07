@@ -72,7 +72,12 @@ type UpdateVocabRequest struct {
 	Definition  string   `json:"definition"`
 	Example     Examples `json:"example"`
 	Translation string   `json:"translation"`
-	Status      Status   `json:"status" binding:"required,oneof=learning memorized"`
+	Status      Status   `json:"status"`
+}
+
+// TestResultRequest represents the test result update request
+type TestResultRequest struct {
+	Passed bool `json:"passed"`
 }
 
 // VocabListResponse represents the vocabulary list response
