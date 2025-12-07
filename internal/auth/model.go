@@ -4,7 +4,7 @@ import "time"
 
 // User represents the user domain model
 type User struct {
-	ID        int64     `json:"id"`
+	ID        string    `json:"id"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
 	Name      string    `json:"name"`

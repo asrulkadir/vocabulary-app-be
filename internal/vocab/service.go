@@ -12,12 +12,12 @@ var (
 
 // Service handles business logic for vocabulary
 type Service interface {
-	Create(ctx context.Context, userID int64, req *CreateVocabRequest) (*Vocabulary, error)
-	GetByID(ctx context.Context, userID, id int64) (*Vocabulary, error)
-	GetByUserID(ctx context.Context, userID int64, page, pageSize int) (*VocabListResponse, error)
-	Update(ctx context.Context, userID, id int64, req *UpdateVocabRequest) (*Vocabulary, error)
-	Delete(ctx context.Context, userID, id int64) error
-	UpdateTestResult(ctx context.Context, userID, id int64, passed bool) (*Vocabulary, error)
+	Create(ctx context.Context, userID string, req *CreateVocabRequest) (*Vocabulary, error)
+	GetByID(ctx context.Context, userID, id string) (*Vocabulary, error)
+	GetByUserID(ctx context.Context, userID string, page, pageSize int) (*VocabListResponse, error)
+	Update(ctx context.Context, userID, id string, req *UpdateVocabRequest) (*Vocabulary, error)
+	Delete(ctx context.Context, userID, id string) error
+	UpdateTestResult(ctx context.Context, userID, id string, passed bool) (*Vocabulary, error)
 }
 
 type service struct {
@@ -30,7 +30,7 @@ func NewService(repo Repository) Service {
 }
 
 // Create creates a new vocabulary entry
-func (s *service) Create(ctx context.Context, userID int64, req *CreateVocabRequest) (*Vocabulary, error) {
+func (s *service) Create(ctx context.Context, userID string, req *CreateVocabRequest) (*Vocabulary, error) {
 	vocab := &Vocabulary{
 		UserID:      userID,
 		Word:        req.Word,
@@ -51,7 +51,7 @@ func (s *service) Create(ctx context.Context, userID int64, req *CreateVocabRequ
 }
 
 // GetByID retrieves a vocabulary by ID
-func (s *service) GetByID(ctx context.Context, userID, id int64) (*Vocabulary, error) {
+func (s *service) GetByID(ctx context.Context, userID, id string) (*Vocabulary, error) {
 	vocab, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func (s *service) GetByID(ctx context.Context, userID, id int64) (*Vocabulary, e
 }
 
 // GetByUserID retrieves vocabularies by user ID with pagination
-func (s *service) GetByUserID(ctx context.Context, userID int64, page, pageSize int) (*VocabListResponse, error) {
+func (s *service) GetByUserID(ctx context.Context, userID string, page, pageSize int) (*VocabListResponse, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -97,7 +97,7 @@ func (s *service) GetByUserID(ctx context.Context, userID int64, page, pageSize 
 }
 
 // Update updates a vocabulary entry
-func (s *service) Update(ctx context.Context, userID, id int64, req *UpdateVocabRequest) (*Vocabulary, error) {
+func (s *service) Update(ctx context.Context, userID, id string, req *UpdateVocabRequest) (*Vocabulary, error) {
 	vocab, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (s *service) Update(ctx context.Context, userID, id int64, req *UpdateVocab
 }
 
 // Delete deletes a vocabulary entry
-func (s *service) Delete(ctx context.Context, userID, id int64) error {
+func (s *service) Delete(ctx context.Context, userID, id string) error {
 	vocab, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return err
@@ -152,7 +152,7 @@ func (s *service) Delete(ctx context.Context, userID, id int64) error {
 }
 
 // UpdateTestResult updates the test result for a vocabulary
-func (s *service) UpdateTestResult(ctx context.Context, userID, id int64, passed bool) (*Vocabulary, error) {
+func (s *service) UpdateTestResult(ctx context.Context, userID, id string, passed bool) (*Vocabulary, error) {
 	vocab, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err

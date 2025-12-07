@@ -20,7 +20,7 @@ var (
 type Service interface {
 	Login(ctx context.Context, req *LoginRequest) (*AuthResponse, error)
 	Register(ctx context.Context, req *RegisterRequest) (*AuthResponse, error)
-	GetUserByID(ctx context.Context, id int64) (*User, error)
+	GetUserByID(ctx context.Context, id string) (*User, error)
 }
 
 type service struct {
@@ -100,7 +100,7 @@ func (s *service) Register(ctx context.Context, req *RegisterRequest) (*AuthResp
 }
 
 // GetUserByID retrieves a user by ID
-func (s *service) GetUserByID(ctx context.Context, id int64) (*User, error) {
+func (s *service) GetUserByID(ctx context.Context, id string) (*User, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (s *service) GetUserByID(ctx context.Context, id int64) (*User, error) {
 }
 
 // generateToken generates a JWT token for the user
-func generateToken(userID int64, email string) (string, error) {
+func generateToken(userID string, email string) (string, error) {
 	cfg := config.Load()
 	token, err := middleware.GenerateToken(userID, email, cfg.JWTSecret, 24)
 	return token, err

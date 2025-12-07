@@ -44,8 +44,8 @@ func (s Status) String() string {
 
 // Vocabulary represents the vocabulary domain model
 type Vocabulary struct {
-	ID                int64     `json:"id"`
-	UserID            int64     `json:"user_id"`
+	ID                string    `json:"id"`
+	UserID            string    `json:"user_id"`
 	Word              string    `json:"word"`
 	Definition        string    `json:"definition"`
 	Example           Examples  `json:"example,omitempty"`

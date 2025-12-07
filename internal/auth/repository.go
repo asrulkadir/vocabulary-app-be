@@ -9,7 +9,7 @@ import (
 type Repository interface {
 	FindByEmail(ctx context.Context, email string) (*User, error)
 	Create(ctx context.Context, user *User) error
-	FindByID(ctx context.Context, id int64) (*User, error)
+	FindByID(ctx context.Context, id string) (*User, error)
 }
 
 type repository struct {
@@ -53,7 +53,7 @@ func (r *repository) Create(ctx context.Context, user *User) error {
 }
 
 // FindByID finds a user by ID
-func (r *repository) FindByID(ctx context.Context, id int64) (*User, error) {
+func (r *repository) FindByID(ctx context.Context, id string) (*User, error) {
 	query := `SELECT id, email, password, name, created_at, updated_at FROM users WHERE id = $1`
 
 	var user User

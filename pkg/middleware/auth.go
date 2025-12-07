@@ -14,7 +14,7 @@ import (
 func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var token string
-		var userID int64
+		var userID string
 		var err error
 
 		// Try to get token from HTTP-only cookie first (for web browsers)
@@ -52,13 +52,13 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 // CustomClaims represents JWT custom claims
 type CustomClaims struct {
-	UserID int64  `json:"user_id"`
+	UserID string `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
 // validateToken validates a JWT token and returns the user ID
-func validateToken(tokenString string, secret string) (int64, error) {
+func validateToken(tokenString string, secret string) (string, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (any, error) {
 		// Verify signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -68,20 +68,20 @@ func validateToken(tokenString string, secret string) (int64, error) {
 	})
 
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// Extract claims
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
-		return 0, fmt.Errorf("invalid token claims")
+		return "", fmt.Errorf("invalid token claims")
 	}
 
 	return claims.UserID, nil
 }
 
 // GenerateToken generates a JWT token for a user
-func GenerateToken(userID int64, email string, secret string, expirationHours int) (string, error) {
+func GenerateToken(userID string, email string, secret string, expirationHours int) (string, error) {
 	claims := CustomClaims{
 		UserID: userID,
 		Email:  email,

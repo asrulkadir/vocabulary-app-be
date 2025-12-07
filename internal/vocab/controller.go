@@ -36,18 +36,18 @@ func RegisterRoutes(router *gin.Engine, c *Controller, jwtSecret string) {
 }
 
 // getUserID extracts user ID from context (set by auth middleware)
-func getUserID(ctx *gin.Context) int64 {
+func getUserID(ctx *gin.Context) string {
 	userID, exists := ctx.Get("userID")
 	if !exists {
-		return 0
+		return ""
 	}
-	return userID.(int64)
+	return userID.(string)
 }
 
 // Create handles vocabulary creation
 func (c *Controller) Create(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -72,7 +72,7 @@ func (c *Controller) Create(ctx *gin.Context) {
 // GetAll handles getting all vocabularies for a user
 func (c *Controller) GetAll(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
@@ -93,14 +93,13 @@ func (c *Controller) GetAll(ctx *gin.Context) {
 // GetByID handles getting a vocabulary by ID
 func (c *Controller) GetByID(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.Error(err)
+	id := ctx.Param("id")
+	if id == "" {
 		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -125,14 +124,13 @@ func (c *Controller) GetByID(ctx *gin.Context) {
 // Update handles vocabulary update
 func (c *Controller) Update(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.Error(err)
+	id := ctx.Param("id")
+	if id == "" {
 		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -164,14 +162,13 @@ func (c *Controller) Update(ctx *gin.Context) {
 // Delete handles vocabulary deletion
 func (c *Controller) Delete(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.Error(err)
+	id := ctx.Param("id")
+	if id == "" {
 		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}
@@ -195,14 +192,13 @@ func (c *Controller) Delete(ctx *gin.Context) {
 // UpdateTestResult handles updating test result for a vocabulary
 func (c *Controller) UpdateTestResult(ctx *gin.Context) {
 	userID := getUserID(ctx)
-	if userID == 0 {
+	if userID == "" {
 		utils.ErrorResponse(ctx, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
 
-	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.Error(err)
+	id := ctx.Param("id")
+	if id == "" {
 		utils.ErrorResponse(ctx, http.StatusBadRequest, "Invalid ID")
 		return
 	}

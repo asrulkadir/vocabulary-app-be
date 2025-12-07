@@ -8,10 +8,10 @@ import (
 // Repository handles data access for vocabulary
 type Repository interface {
 	Create(ctx context.Context, vocab *Vocabulary) error
-	FindByID(ctx context.Context, id int64) (*Vocabulary, error)
-	FindByUserID(ctx context.Context, userID int64, page, pageSize int) ([]Vocabulary, int64, error)
+	FindByID(ctx context.Context, id string) (*Vocabulary, error)
+	FindByUserID(ctx context.Context, userID string, page, pageSize int) ([]Vocabulary, int64, error)
 	Update(ctx context.Context, vocab *Vocabulary) error
-	Delete(ctx context.Context, id int64) error
+	Delete(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -42,7 +42,7 @@ func (r *repository) Create(ctx context.Context, vocab *Vocabulary) error {
 }
 
 // FindByID finds a vocabulary by ID
-func (r *repository) FindByID(ctx context.Context, id int64) (*Vocabulary, error) {
+func (r *repository) FindByID(ctx context.Context, id string) (*Vocabulary, error) {
 	query := `SELECT id, user_id, word, definition, example, translation, status, test_count, passed_test_count, failed_test_count, created_at, updated_at 
 			  FROM vocabularies WHERE id = $1`
 
@@ -72,7 +72,7 @@ func (r *repository) FindByID(ctx context.Context, id int64) (*Vocabulary, error
 }
 
 // FindByUserID finds vocabularies by user ID with pagination
-func (r *repository) FindByUserID(ctx context.Context, userID int64, page, pageSize int) ([]Vocabulary, int64, error) {
+func (r *repository) FindByUserID(ctx context.Context, userID string, page, pageSize int) ([]Vocabulary, int64, error) {
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM vocabularies WHERE user_id = $1`
 	var total int64
@@ -138,7 +138,7 @@ func (r *repository) Update(ctx context.Context, vocab *Vocabulary) error {
 }
 
 // Delete deletes a vocabulary entry
-func (r *repository) Delete(ctx context.Context, id int64) error {
+func (r *repository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM vocabularies WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
