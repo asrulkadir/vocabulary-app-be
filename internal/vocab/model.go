@@ -49,7 +49,7 @@ type Vocabulary struct {
 	Word              string    `json:"word"`
 	Definition        string    `json:"definition"`
 	Example           Examples  `json:"example,omitempty"`
-	Translation       string    `json:"translation,omitempty"`
+	Translation       string    `json:"translation"`
 	Status            Status    `json:"status"`
 	TestCount         int64     `json:"test_count"`
 	PassedTestCount   int64     `json:"passed_test_count"`
@@ -75,9 +75,55 @@ type UpdateVocabRequest struct {
 	Status      Status   `json:"status"`
 }
 
-// TestResultRequest represents the test result update request
+// TestResultRequest represents the test result update request (input-based validation)
 type TestResultRequest struct {
-	Passed bool `json:"passed"`
+	Input string `json:"input" binding:"required"`
+}
+
+// TestVocabulary represents vocabulary for testing (without answers)
+type TestVocabulary struct {
+	ID              string    `json:"id"`
+	UserID          string    `json:"user_id"`
+	Word            string    `json:"word"`
+	Status          Status    `json:"status"`
+	TestCount       int64     `json:"test_count"`
+	PassedTestCount int64     `json:"passed_test_count"`
+	FailedTestCount int64     `json:"failed_test_count"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+// ToTestVocabulary converts Vocabulary to TestVocabulary (hides answers)
+func (v *Vocabulary) ToTestVocabulary() *TestVocabulary {
+	return &TestVocabulary{
+		ID:              v.ID,
+		UserID:          v.UserID,
+		Word:            v.Word,
+		Status:          v.Status,
+		TestCount:       v.TestCount,
+		PassedTestCount: v.PassedTestCount,
+		FailedTestCount: v.FailedTestCount,
+		CreatedAt:       v.CreatedAt,
+		UpdatedAt:       v.UpdatedAt,
+	}
+}
+
+// TestOption represents a single option for multiple choice tests (only translations)
+type TestOption struct {
+	ID          string `json:"id"`
+	Translation string `json:"translation"`
+}
+
+// TestOptionsResponse represents multiple choice options response
+type TestOptionsResponse struct {
+	Options []TestOption `json:"options"`
+}
+
+// TestResultResponse represents the test result response
+type TestResultResponse struct {
+	Passed        bool          `json:"passed"`
+	CorrectAnswer string        `json:"correct_answer,omitempty"`
+	Vocabulary    TestVocabulary `json:"vocabulary"`
 }
 
 // VocabListResponse represents the vocabulary list response
@@ -87,4 +133,6 @@ type VocabListResponse struct {
 	Page       int          `json:"page"`
 	PageSize   int          `json:"page_size"`
 	TotalPages int          `json:"total_pages"`
+	Search     string       `json:"search,omitempty"`
+	Status     string       `json:"status,omitempty"`
 }

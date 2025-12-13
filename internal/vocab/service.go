@@ -3,21 +3,26 @@ package vocab
 import (
 	"context"
 	"errors"
+	"strings"
 )
 
 var (
-	ErrVocabNotFound = errors.New("vocabulary not found")
-	ErrUnauthorized  = errors.New("unauthorized access")
+	ErrVocabNotFound     = errors.New("vocabulary not found")
+	ErrUnauthorized      = errors.New("unauthorized access")
+	ErrNoVocabsAvailable = errors.New("no vocabularies available for testing")
 )
 
 // Service handles business logic for vocabulary
 type Service interface {
 	Create(ctx context.Context, userID string, req *CreateVocabRequest) (*Vocabulary, error)
 	GetByID(ctx context.Context, userID, id string) (*Vocabulary, error)
-	GetByUserID(ctx context.Context, userID string, page, pageSize int) (*VocabListResponse, error)
+	GetByUserID(ctx context.Context, userID string, page, pageSize int, search, status string) (*VocabListResponse, error)
 	Update(ctx context.Context, userID, id string, req *UpdateVocabRequest) (*Vocabulary, error)
 	Delete(ctx context.Context, userID, id string) error
-	UpdateTestResult(ctx context.Context, userID, id string, passed bool) (*Vocabulary, error)
+	GetRandomForTest(ctx context.Context, userID string, status string) (*TestVocabulary, error)
+	GetTestOptions(ctx context.Context, userID string, vocabID string) (*TestOptionsResponse, error)
+	GetVocabStats(ctx context.Context, userID string) (map[string]int64, error)
+	ValidateTestAnswer(ctx context.Context, userID, id string, input string) (*TestResultResponse, error)
 }
 
 type service struct {
@@ -69,7 +74,7 @@ func (s *service) GetByID(ctx context.Context, userID, id string) (*Vocabulary, 
 }
 
 // GetByUserID retrieves vocabularies by user ID with pagination
-func (s *service) GetByUserID(ctx context.Context, userID string, page, pageSize int) (*VocabListResponse, error) {
+func (s *service) GetByUserID(ctx context.Context, userID string, page, pageSize int, search, status string) (*VocabListResponse, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -77,7 +82,7 @@ func (s *service) GetByUserID(ctx context.Context, userID string, page, pageSize
 		pageSize = 10
 	}
 
-	vocabularies, total, err := s.repo.FindByUserID(ctx, userID, page, pageSize)
+	vocabularies, total, err := s.repo.FindByUserID(ctx, userID, page, pageSize, search, status)
 	if err != nil {
 		return nil, err
 	}
@@ -93,6 +98,8 @@ func (s *service) GetByUserID(ctx context.Context, userID string, page, pageSize
 		Page:       page,
 		PageSize:   pageSize,
 		TotalPages: totalPages,
+		Search:     search,
+		Status:     status,
 	}, nil
 }
 
@@ -115,16 +122,13 @@ func (s *service) Update(ctx context.Context, userID, id string, req *UpdateVoca
 	if req.Word != "" {
 		vocab.Word = req.Word
 	}
-	if req.Definition != "" {
-		vocab.Definition = req.Definition
-	}
 	exampleValue, err := req.Example.Value()
 	if err == nil && exampleValue != "" {
 		vocab.Example = req.Example
 	}
-	if req.Translation != "" {
-		vocab.Translation = req.Translation
-	}
+
+	vocab.Definition = req.Definition
+	vocab.Translation = req.Translation
 
 	if err := s.repo.Update(ctx, vocab); err != nil {
 		return nil, err
@@ -151,8 +155,89 @@ func (s *service) Delete(ctx context.Context, userID, id string) error {
 	return s.repo.Delete(ctx, id)
 }
 
-// UpdateTestResult updates the test result for a vocabulary
-func (s *service) UpdateTestResult(ctx context.Context, userID, id string, passed bool) (*Vocabulary, error) {
+// GetRandomForTest gets a random vocabulary for testing with optional status filter
+func (s *service) GetRandomForTest(ctx context.Context, userID string, status string) (*TestVocabulary, error) {
+	vocab, err := s.repo.FindRandomByUserIDAndStatus(ctx, userID, status)
+	if err != nil {
+		return nil, err
+	}
+	if vocab == nil {
+		return nil, ErrNoVocabsAvailable
+	}
+	return vocab.ToTestVocabulary(), nil
+}
+
+// GetTestOptions gets random vocabulary options for multiple-choice test (4 total: 1 correct + 3 wrong)
+func (s *service) GetTestOptions(ctx context.Context, userID string, vocabID string) (*TestOptionsResponse, error) {
+	// Get the correct answer (the vocabulary being tested)
+	correctVocab, err := s.repo.FindByID(ctx, vocabID)
+	if err != nil {
+		return nil, err
+	}
+	if correctVocab == nil {
+		return nil, ErrVocabNotFound
+	}
+
+	// Check ownership
+	if correctVocab.UserID != userID {
+		return nil, ErrUnauthorized
+	}
+
+	// Get 3 random wrong options excluding the correct answer
+	wrongOptions, err := s.repo.FindRandomOptionsExcluding(ctx, userID, vocabID, 3)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create TestOption array with correct answer + wrong answers
+	testOptions := make([]TestOption, 0, 4)
+	
+	// Add correct answer
+	testOptions = append(testOptions, TestOption{
+		ID:          correctVocab.ID,
+		Translation: correctVocab.Translation,
+	})
+	
+	// Add wrong answers
+	for _, opt := range wrongOptions {
+		testOptions = append(testOptions, TestOption{
+			ID:          opt.ID,
+			Translation: opt.Translation,
+		})
+	}
+
+	return &TestOptionsResponse{
+		Options: testOptions,
+	}, nil
+}
+
+// GetVocabStats gets vocabulary statistics for the user
+func (s *service) GetVocabStats(ctx context.Context, userID string) (map[string]int64, error) {
+	stats := make(map[string]int64)
+
+	total, err := s.repo.CountByUserIDAndStatus(ctx, userID, "")
+	if err != nil {
+		return nil, err
+	}
+	stats["total"] = total
+
+	learning, err := s.repo.CountByUserIDAndStatus(ctx, userID, string(StatusLearning))
+	if err != nil {
+		return nil, err
+	}
+	stats["learning"] = learning
+
+	memorized, err := s.repo.CountByUserIDAndStatus(ctx, userID, string(StatusMemorized))
+	if err != nil {
+		return nil, err
+	}
+	stats["memorized"] = memorized
+
+	return stats, nil
+}
+
+// ValidateTestAnswer validates the user's answer and updates test result
+func (s *service) ValidateTestAnswer(ctx context.Context, userID, id string, input string) (*TestResultResponse, error) {
 	vocab, err := s.repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -166,6 +251,10 @@ func (s *service) UpdateTestResult(ctx context.Context, userID, id string, passe
 		return nil, ErrUnauthorized
 	}
 
+	// Validate answer - compare with translation (case-insensitive, trimmed)
+	correctAnswer := vocab.Translation
+	passed := strings.EqualFold(strings.TrimSpace(input), strings.TrimSpace(correctAnswer))
+
 	// Update test counts
 	vocab.TestCount++
 	if passed {
@@ -177,11 +266,23 @@ func (s *service) UpdateTestResult(ctx context.Context, userID, id string, passe
 	// Auto-memorize if passed - failed >= 10
 	if vocab.PassedTestCount-vocab.FailedTestCount >= 10 && vocab.Status != StatusMemorized {
 		vocab.Status = StatusMemorized
+	} else if vocab.PassedTestCount-vocab.FailedTestCount < 10 && vocab.Status != StatusLearning {
+		vocab.Status = StatusLearning
 	}
 
 	if err := s.repo.Update(ctx, vocab); err != nil {
 		return nil, err
 	}
 
-	return vocab, nil
+	response := &TestResultResponse{
+		Passed:     passed,
+		Vocabulary: *vocab.ToTestVocabulary(),
+	}
+
+	// Include correct answer if failed
+	if !passed {
+		response.CorrectAnswer = correctAnswer
+	}
+
+	return response, nil
 }
